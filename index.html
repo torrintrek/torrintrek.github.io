@@ -1,30 +1,75 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>My Photo Gallery</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>My Photography</title>
   <style>
-    body { font-family: Arial, sans-serif; margin: 20px; background: #fafafa; }
-    h1 { text-align: center; }
+    :root { --maxw: 1100px; }
+    * { box-sizing: border-box; }
+    body { margin: 0; font-family: system-ui, Arial, sans-serif; background:#0b0b0b; color:#eee; }
+    header { padding: 32px 20px; text-align: center; }
+    header h1 { margin: 0 0 6px; font-weight: 700; }
+    header p { margin: 0; color:#aaa; }
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 16px 40px; }
     .gallery {
       display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
-      gap: 10px;
+      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
+      gap: 12px;
     }
     .gallery img {
-      width: 100%;
-      border-radius: 8px;
-      box-shadow: 0 2px 5px rgba(0,0,0,0.2);
+      width: 100%; height: 100%; object-fit: cover;
+      border-radius: 10px; display: block; cursor: zoom-in;
+      box-shadow: 0 4px 14px rgba(0,0,0,.4);
+    }
+    /* Lightbox */
+    .lightbox {
+      position: fixed; inset: 0; background: rgba(0,0,0,.92);
+      display: none; align-items: center; justify-content: center; padding: 20px;
+    }
+    .lightbox.open { display: flex; }
+    .lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 10px; }
+    .close {
+      position: fixed; top: 14px; right: 16px; font-size: 28px;
+      background: transparent; border: 0; color: #fff; cursor: pointer;
     }
   </style>
 </head>
 <body>
-  <h1>My Photography</h1>
-  <div class="gallery">
-    <img src="photo1.jpg" alt="Photo 1">
-    <img src="photo2.jpg" alt="Photo 2">
-    <img src="photo3.jpg" alt="Photo 3">
+  <header>
+    <h1>My Photography</h1>
+    <p>Selected shots • Click any image to enlarge</p>
+  </header>
+
+  <div class="wrap">
+    <div class="gallery">
+      <img src="photo1.jpg" alt="Photo 1">
+      <img src="photo2.jpg" alt="Photo 2">
+      <img src="photo3.jpg" alt="Photo 3">
+      <!-- Add more: <img src="photo4.jpg" alt="Photo 4"> -->
+    </div>
   </div>
+
+  <div class="lightbox" id="lightbox">
+    <button class="close" id="close" aria-label="Close">✕</button>
+    <img id="lbimg" alt="">
+  </div>
+
+  <script>
+    const lb = document.getElementById('lightbox');
+    const lbimg = document.getElementById('lbimg');
+    const close = document.getElementById('close');
+
+    document.querySelectorAll('.gallery img').forEach(img => {
+      img.addEventListener('click', () => {
+        lbimg.src = img.src; lbimg.alt = img.alt;
+        lb.classList.add('open');
+      });
+    });
+    const hide = () => lb.classList.remove('open');
+    close.addEventListener('click', hide);
+    lb.addEventListener('click', (e) => { if (e.target === lb) hide(); });
+    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+  </script>
 </body>
 </html>
