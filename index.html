@@ -6,119 +6,321 @@
   <title>My Photography</title>
   <meta name="color-scheme" content="dark light">
   <style>
-    :root { --maxw: 1100px; --bg:#0b0b0b; --fg:#eee; --muted:#aaa; }
-    * { box-sizing: border-box; }
-    body { margin: 0; font-family: system-ui, Arial, sans-serif; background: var(--bg); color: var(--fg); }
-    header { padding: 32px 20px; text-align: center; }
-    header h1 { margin: 0 0 6px; font-weight: 700; letter-spacing:.3px; }
-    header p { margin: 0; color: var(--muted); }
-    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 16px 40px; }
-
-    /* --- Gallery grid --- */
-    .gallery {
-      display: grid;
-      grid-template-columns: repeat(auto-fill, minmax(220px, 1fr));
-      gap: 12px;
+    :root {
+      --maxw: 1200px;
+      --bg: #0b0b0b;
+      --fg: #eee;
+      --muted: #b7b7b7;
+      --card-bg: rgba(255,255,255,0.04);
+      --accent: #7bd389;
     }
-    .card {
-      position: relative;
-      overflow: hidden;
-      border-radius: 12px;
-      box-shadow: 0 6px 18px rgba(0,0,0,.45);
-      transform: translateY(8px) scale(.98);
-      opacity: 0;
+    [data-theme="light"] {
+      --bg: #f7f7f9;
+      --fg: #111;
+      --muted: #555;
+      --card-bg: rgba(0,0,0,0.04);
+      --accent: #2563eb;
+    }
+    * { box-sizing: border-box; }
+    html, body { height: 100%; scroll-behavior: smooth; }
+    body { margin: 0; font-family: system-ui, Arial, sans-serif; background: var(--bg); color: var(--fg); }
+
+    /* Background video */
+    #bgvid {
+      position: fixed; inset: 0;
+      width: 100%; height: 100%;
+      object-fit: cover;
+      z-index: -2;
+      filter: brightness(.45);
+    }
+    .hero-overlay {
+      position: fixed; inset: 0;
+      background: radial-gradient(transparent 40%, rgba(0,0,0,.35)),
+                  linear-gradient(0deg, rgba(0,0,0,.35), rgba(0,0,0,.35));
+      z-index: -1;
+    }
+
+    /* Navbar */
+    .nav { position: sticky; top: 0; z-index: 10; backdrop-filter: blur(10px);
+           background: color-mix(in oklab, var(--bg) 80%, transparent);
+           border-bottom: 1px solid color-mix(in oklab, var(--fg) 15%, transparent); }
+    .nav-inner { max-width: var(--maxw); margin: 0 auto; padding: 10px 16px;
+                 display: flex; align-items: center; gap: 12px; justify-content: space-between; }
+    .brand { font-weight: 800; letter-spacing:.5px; }
+    .links { display: flex; gap: 14px; flex-wrap: wrap; }
+    .links a { text-decoration: none; color: var(--fg); opacity:.85; }
+    .links a:hover { opacity:1; }
+    .right { display: flex; align-items: center; gap: 10px; }
+    .btn {
+      border:1px solid color-mix(in oklab, var(--fg) 20%, transparent);
+      background: color-mix(in oklab, var(--bg) 80%, transparent);
+      padding:8px 12px; border-radius:10px; color:var(--fg); cursor:pointer;
+      transition: transform .15s ease;
+    }
+    .btn:hover { transform: translateY(-1px); }
+
+    header.hero { display: grid; place-items: center; min-height: 55svh;
+                  text-align: center; padding: 48px 16px 24px; }
+    .hero h1 { margin: 0 0 8px; font-size: clamp(28px, 5vw, 42px); }
+    .hero p { margin: 0; color: var(--muted); max-width: 720px; }
+    .hero-cta { margin-top: 18px; display:flex; gap:10px; justify-content:center; flex-wrap:wrap; }
+    .hero-cta .btn.primary { border-color: transparent; background: var(--accent); color: #0b0b0b; font-weight: 700; }
+
+    .wrap { max-width: var(--maxw); margin: 0 auto; padding: 0 16px 60px; }
+
+    /* Filters */
+    .filters { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; margin: 8px auto 18px; }
+    .chip {
+      border:1px solid color-mix(in oklab, var(--fg) 20%, transparent);
+      background: color-mix(in oklab, var(--bg) 80%, transparent);
+      padding:8px 12px; border-radius:999px; cursor:pointer; color: var(--fg); opacity:.9;
+    }
+    .chip.active { background: var(--accent); color:#0b0b0b; border-color: transparent; opacity:1; font-weight: 700; }
+
+    /* Gallery */
+    .gallery { display: grid; grid-template-columns: repeat(auto-fill, minmax(230px, 1fr)); gap: 12px; }
+    figure.card {
+      position: relative; margin: 0; border-radius: 12px; overflow: hidden;
+      background: var(--card-bg);
+      box-shadow: 0 6px 18px rgba(0,0,0,.35);
+      transform: translateY(10px) scale(.985); opacity: 0; /* pop-in start */
       transition: transform .5s cubic-bezier(.2,.8,.2,1), opacity .5s ease;
       will-change: transform, opacity;
     }
-    /* Pop-in once observed */
-    .card.revealed {
-      opacity: 1;
-      transform: translateY(0) scale(1);
-    }
-
-    /* Image + hover grow (only on devices that support hover) */
+    figure.card.revealed { opacity: 1; transform: translateY(0) scale(1); }
     .card img {
-      display: block;
-      width: 100%;
-      height: 100%;
-      object-fit: cover;
+      width: 100%; height: 100%; aspect-ratio: 4/3; object-fit: cover; display: block;
       transition: transform .35s cubic-bezier(.2,.8,.2,1), filter .35s ease;
     }
-    @media (hover:hover) {
-      .card:hover img { transform: scale(1.06); cursor: zoom-in; }
+    @media (hover:hover) { .card:hover img { transform: scale(1.06); cursor: zoom-in; } }
+    figcaption {
+      position:absolute; left:10px; bottom:10px; right:10px;
+      font-size: .9rem; color:#fff; text-shadow: 0 1px 8px rgba(0,0,0,.6);
+      background: linear-gradient(transparent, rgba(0,0,0,.35));
+      padding: 30px 10px 8px; border-radius: 12px;
     }
+
+    /* Sections */
+    section { padding-top: 30px; }
+    h2 { margin: 12px 0 8px; font-size: clamp(22px, 3.5vw, 28px); text-align:center; }
+    .about, .contact { max-width: 800px; margin: 0 auto; color: var(--muted); line-height:1.65; padding: 8px 16px; }
+    .contact a { color: var(--fg); }
 
     /* Lightbox */
-    .lightbox {
-      position: fixed; inset: 0; background: rgba(0,0,0,.92);
-      display: none; align-items: center; justify-content: center; padding: 20px; z-index: 30;
-    }
+    .lightbox { position: fixed; inset: 0; background: rgba(0,0,0,.92); display: none;
+                align-items: center; justify-content: center; padding: 20px; z-index: 30; }
     .lightbox.open { display: flex; }
     .lightbox img { max-width: 95vw; max-height: 90vh; border-radius: 12px; }
-    .close {
-      position: fixed; top: 14px; right: 16px; font-size: 28px;
-      background: transparent; border: 0; color: #fff; cursor: pointer;
+    .close { position: fixed; top: 14px; right: 16px; font-size: 28px; background: transparent; border: 0; color: #fff; cursor: pointer; }
+
+    /* Floating Sound Button */
+    #soundBtn {
+      position: fixed; bottom: 20px; left: 20px; z-index: 40;
+      border:1px solid color-mix(in oklab, var(--fg) 20%, transparent);
+      background: color-mix(in oklab, var(--bg) 80%, transparent);
+      padding:10px 12px; border-radius:10px; color:var(--fg); cursor:pointer;
+      box-shadow: 0 4px 14px rgba(0,0,0,.35);
     }
 
-    /* Respect reduced motion */
+    /* Reduced motion */
     @media (prefers-reduced-motion: reduce) {
-      .card, .card img { transition: none; }
+      .card, .card img { transition: none !important; }
+      html, body { scroll-behavior: auto; }
     }
   </style>
 </head>
-<body>
-  <header>
-    <h1>My Photography</h1>
-    <p>Selected shots • Hover to preview • Click to view large • I took these photos back in 2020 on a Yashica Film Camera with Kodak Portra 400 (most likely)</p>
+<body data-theme="dark">
+  <!-- Background video (upload bg.mp4 to your repo root) -->
+  <video autoplay loop playsinline id="bgvid">
+    <source src="bg.mp4" type="video/mp4">
+  </video>
+  <div class="hero-overlay" aria-hidden="true"></div>
+
+  <!-- Navbar -->
+  <nav class="nav">
+    <div class="nav-inner">
+      <div class="brand">My Photography</div>
+      <div class="links">
+        <a href="#home">Home</a>
+        <a href="#gallery">Gallery</a>
+        <a href="#about">About</a>
+        <a href="#contact">Contact</a>
+      </div>
+      <div class="right">
+        <button class="btn" id="themeBtn" title="Toggle theme">☀︎ / 🌙</button>
+        <a class="btn" href="#contact">Hire Me</a>
+      </div>
+    </div>
+  </nav>
+
+  <!-- Hero -->
+  <header class="hero" id="home">
+    <div>
+      <h1>Capturing Light & Quiet Places</h1>
+      <p>Selected work from the trails, city nights, and in-between moments. Scroll to explore or jump to the gallery.</p>
+      <div class="hero-cta">
+        <a class="btn primary" href="#gallery">View Gallery</a>
+        <a class="btn" href="#about">About</a>
+      </div>
+    </div>
   </header>
 
-  <div class="wrap">
-    <div class="gallery" id="gallery">
-      <!-- Each image lives inside a .card so we can animate it -->
-      <figure class="card"><img src="photo1.jpg" alt="Photo 1" loading="lazy" sizes="(max-width:600px) 50vw, 25vw"></figure>
-      <figure class="card"><img src="photo2.jpg" alt="Photo 2" loading="lazy" sizes="(max-width:600px) 50vw, 25vw"></figure>
-      <figure class="card"><img src="photo3.jpg" alt="Photo 3" loading="lazy" sizes="(max-width:600px) 50vw, 25vw"></figure>
-      <!-- Add more images by duplicating the line above and changing the filename -->
-    </div>
-  </div>
+  <!-- Filters + Gallery -->
+  <main class="wrap">
+    <section id="gallery">
+      <h2>Gallery</h2>
+      <div class="filters" aria-label="Filter photos">
+        <button class="chip active" data-filter="all">All</button>
+        <button class="chip" data-filter="landscape">Landscapes</button>
+        <button class="chip" data-filter="portrait">Portraits</button>
+        <button class="chip" data-filter="street">Street</button>
+      </div>
 
+      <div class="gallery" id="grid">
+        <figure class="card" data-cat="landscape">
+          <img src="photo1.jpg" alt="Sunset ridge" loading="lazy">
+          <figcaption>Sunset, Smith Rock (2024) • Landscape</figcaption>
+        </figure>
+        <figure class="card" data-cat="portrait">
+          <img src="photo2.jpg" alt="Portrait in shade" loading="lazy">
+          <figcaption>Quiet Portrait • Portrait</figcaption>
+        </figure>
+        <figure class="card" data-cat="street">
+          <img src="photo3.jpg" alt="Rainy crosswalk" loading="lazy">
+          <figcaption>Rain on 3rd • Street</figcaption>
+        </figure>
+        <!-- Add more:
+        <figure class="card" data-cat="landscape"><img src="photo4.jpg" alt="..." loading="lazy"><figcaption>...</figcaption></figure>
+        -->
+      </div>
+    </section>
+
+    <!-- About -->
+    <section id="about">
+      <h2>About</h2>
+      <div class="about">
+        I’m a photographer who loves the calm in between storms: mist over ridgelines, empty streets after rain, and the way neon falls on concrete.
+        This site is a living selection of recent work. Prints and commissions on request.
+      </div>
+    </section>
+
+    <!-- Contact -->
+    <section id="contact">
+      <h2>Contact</h2>
+      <div class="contact">
+        For prints, licensing, or collaborations:<br>
+        <strong>Email:</strong> <a href="mailto:youremail@example.com">youremail@example.com</a><br>
+        <strong>Instagram:</strong> <a href="https://instagram.com/yourhandle" target="_blank" rel="noopener">@yourhandle</a>
+      </div>
+    </section>
+  </main>
+
+  <!-- Lightbox -->
   <div class="lightbox" id="lightbox" aria-modal="true" role="dialog">
     <button class="close" id="close" aria-label="Close">✕</button>
     <img id="lbimg" alt="">
   </div>
 
+  <!-- Floating sound toggle -->
+  <button id="soundBtn" class="btn" aria-pressed="false" title="Toggle background video sound">🔊 Play Sound</button>
+
   <script>
-    // --- Staggered reveal on enter (pop-in) ---
-    const observer = new IntersectionObserver((entries) => {
-      entries.forEach((entry) => {
-        if (entry.isIntersecting) {
-          // small stagger based on index for a nice cascade
-          const i = [...entry.target.parentNode.children].indexOf(entry.target);
-          entry.target.style.transitionDelay = (i * 60) + 'ms';
-          entry.target.classList.add('revealed');
-          observer.unobserve(entry.target);
+    // Theme toggle
+    const themeBtn = document.getElementById('themeBtn');
+    const setTheme = (t) => document.body.setAttribute('data-theme', t);
+    themeBtn.addEventListener('click', () => {
+      const cur = document.body.getAttribute('data-theme');
+      setTheme(cur === 'dark' ? 'light' : 'dark');
+      localStorage.setItem('theme', document.body.getAttribute('data-theme'));
+    });
+    const savedTheme = localStorage.getItem('theme');
+    if (savedTheme) setTheme(savedTheme);
+
+    // Pop-in reveal
+    const cards = document.querySelectorAll('figure.card');
+    const io = new IntersectionObserver((entries) => {
+      entries.forEach((e) => {
+        if (e.isIntersecting) {
+          const idx = [...e.target.parentNode.children].indexOf(e.target);
+          e.target.style.transitionDelay = (idx * 60) + 'ms';
+          e.target.classList.add('revealed');
+          io.unobserve(e.target);
         }
       });
-    }, { rootMargin: '0px 0px -50px 0px', threshold: 0.1 });
+    }, { threshold: 0.1, rootMargin: '0px 0px -60px 0px' });
+    cards.forEach(c => io.observe(c));
 
-    document.querySelectorAll('.card').forEach(el => observer.observe(el));
+    // Filters
+    const chips = document.querySelectorAll('.chip');
+    const grid = document.getElementById('grid');
+    chips.forEach(ch => ch.addEventListener('click', () => {
+      chips.forEach(x => x.classList.remove('active'));
+      ch.classList.add('active');
+      const f = ch.dataset.filter;
+      grid.querySelectorAll('.card').forEach(card => {
+        const show = (f === 'all') || card.dataset.cat === f;
+        card.style.display = show ? '' : 'none';
+      });
+    }));
 
-    // --- Lightbox click to enlarge ---
+    // Lightbox with arrow navigation
     const lb = document.getElementById('lightbox');
     const lbimg = document.getElementById('lbimg');
     const closeBtn = document.getElementById('close');
+    const thumbs = [...document.querySelectorAll('.gallery img')];
+    let idx = -1;
 
-    document.querySelectorAll('.gallery img').forEach(img => {
-      img.addEventListener('click', () => {
-        lbimg.src = img.src; lbimg.alt = img.alt;
-        lb.classList.add('open');
-      });
-    });
-
+    const openAt = (i) => {
+      idx = i;
+      lbimg.src = thumbs[idx].src;
+      lbimg.alt = thumbs[idx].alt || '';
+      lb.classList.add('open');
+    };
     const hide = () => lb.classList.remove('open');
+
+    thumbs.forEach((img, i) => img.addEventListener('click', () => openAt(i)));
     closeBtn.addEventListener('click', hide);
     lb.addEventListener('click', (e) => { if (e.target === lb) hide(); });
-    document.addEventListener('keydown', (e) => { if (e.key === 'Escape') hide(); });
+    document.addEventListener('keydown', (e) => {
+      if (!lb.classList.contains('open')) return;
+      if (e.key === 'Escape') hide();
+      if (e.key === 'ArrowRight') openAt((idx + 1) % thumbs.length);
+      if (e.key === 'ArrowLeft')  openAt((idx - 1 + thumbs.length) % thumbs.length);
+    });
+
+    // Background video + sound toggle (remembers preference)
+    const bgvid = document.getElementById('bgvid');
+    const soundBtn = document.getElementById('soundBtn');
+
+    // Attempt silent autoplay; respect saved preference
+    const savedAudio = localStorage.getItem('bgvid-muted');
+    bgvid.muted = savedAudio === null ? true : (savedAudio === 'true');
+
+    const updateSoundBtn = () => {
+      const on = !bgvid.muted;
+      soundBtn.textContent = on ? '🔇 Mute' : '🔊 Play Sound';
+      soundBtn.setAttribute('aria-pressed', on ? 'true' : 'false');
+    };
+
+    bgvid.play().catch(() => { /* autoplay may wait for interaction; that's fine */ });
+    updateSoundBtn();
+
+    soundBtn.addEventListener('click', async () => {
+      bgvid.muted = !bgvid.muted;
+      localStorage.setItem('bgvid-muted', String(bgvid.muted));
+      updateSoundBtn();
+      try { await bgvid.play(); } catch(e) { /* ignore */ }
+    });
+
+    // Also allow starting audio when user clicks anywhere on the hero CTA (optional UX nicety)
+    document.querySelector('.hero-cta')?.addEventListener('click', async () => {
+      if (bgvid.muted) {
+        bgvid.muted = false;
+        localStorage.setItem('bgvid-muted', 'false');
+        updateSoundBtn();
+        try { await bgvid.play(); } catch(e) {}
+      }
+    });
   </script>
 </body>
 </html>
